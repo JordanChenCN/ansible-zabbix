@@ -1,0 +1,14 @@
+- hosts: zabbix_agent  //在zabbix的hosts文件中定义的需要安装的agent的主机组
+  remote_user: root    //远端执行任务的用户
+  tasks:               //任务
+  - name: copy zabbix package      //任务名
+    copy: src=/opt/zabbix-3.2.1.tar.gz dest=/opt/zabbix-3.2.1.tar.gz   //任务模块及执行的命令，将主机的zabbix源码包发送给安装的agent的主机组
+    tags: upload       //给此任务打标记，可单独执行标记的任务，使用 ansible-playbook -C 命令执行
+    
+  - name: unpack zabbix package
+    shell: "cd /opt && if [ ! -d zabbix-3.2.1 ]; then tar -zxvf zabbix-3.2.1.tar.gz; fi"   //如果当前目录没有已解压的文件夹，则解压
+    tags: unpack
+
+  - name: install agent
+    shell: "cd /opt/zabbix-3.2.1 && ./configure --prefix=/usr/local/zabbix --enable-agent && make && make install"  //编译安装zabbix的agent端
+    tags: install
