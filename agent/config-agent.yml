@@ -1,0 +1,32 @@
+- hosts: zabbix_agent
+  remote_user: root  
+  tasks:
+    - name: add group zabbix
+      group: "name=zabbix"
+      tags: addgroup
+
+    - name: add user zabbix
+      user: "name=zabbix groups=zabbix createhome=yes state=present"
+      tags: adduser
+
+    - name: modify the config
+      shell: "sed -i 's/^Server=127.0.0.1/Server=192.168.83.34/' /usr/local/zabbix/etc/zabbix_agentd.conf && sed -i 's/^ServerActive=127.0.0.1/ServerActive=192.168.83.34/' /usr/local/zabbix/etc/zabbix_agentd.conf && sed -i 's/^Hostname=Zabbix server/Hostname={{ansible_nodename}}/' /usr/local/zabbix/etc/zabbix_agentd.conf"
+      tags:
+        - agent-config
+        - config
+
+    - name: modify system config
+      shell: "cp /opt/zabbix-3.2.1/misc/init.d/tru64/zabbix_agentd /etc/init.d/ && chmod +x /etc/init.d/zabbix_agentd"
+      tags:
+        - system-config
+        - config
+      notify:
+        - restart zabbix_agentd
+
+    - name: create soft-link
+      shell: "ln -s /usr/local/zabbix/sbin/* /usr/local/sbin/ && ln -s /usr/local/zabbix/bin/* /usr/local/bin/"
+      tags:
+        - soft-link
+  handlers:
+    - name: restart zabbix_agentd
+      service: name=zabbix_agentd state=restarted
